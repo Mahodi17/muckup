@@ -1,0 +1,7 @@
+{
+  "name": "AI Product Design Architect",
+  "description": "An advanced AI-powered tool that analyzes product images to suggest psychologically optimized professional designs and generates high-fidelity prompts for image generation.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
