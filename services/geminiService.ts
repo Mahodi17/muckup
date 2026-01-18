@@ -5,32 +5,44 @@ import { DesignAnalysis } from "../types";
 // Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export const analyzeProductImage = async (base64Images: string[]): Promise<DesignAnalysis> => {
+export const analyzeProductImage = async (
+  productImages: string[], 
+  referenceImages: string[], 
+  userInstructions?: string
+): Promise<DesignAnalysis> => {
   const model = 'gemini-3-flash-preview';
   
-  const systemInstruction = `You are a world-class Product Marketing Psychologist and Commercial Creative Director for high-end brands. 
-  Analyze the product from the provided reference images (which may show different angles or details) and create a design strategy for a world-class advertisement.
+  const systemInstruction = `You are a world-class Product Marketing Psychologist and Commercial Creative Director. 
+  You will receive two sets of images: 
+  1. Product Images: The core product that must be featured in the ad.
+  2. Style Reference Images (Optional): These represent the desired lighting, composition, mood, or environment the user wants to mimic.
+
+  Create a design strategy for a world-class advertisement.
+  CRITICAL: You MUST incorporate the user's specific instructions and the visual style from the reference images (if provided) into your analysis.
   
   The "imagePrompt" must be an elite-level English prompt for an image generator. 
-  Include specific photographic details: camera lens (e.g. 85mm f/1.8), lighting setup (e.g. volumetric lighting, rim light), material textures, and background environment. 
-  Ensure the prompt describes the original product accurately but in a highly stylized, commercial setting.
+  Include specific photographic details: camera lens (e.g. 85mm f/1.8), lighting setup, material textures, and background. 
+  Ensure the prompt describes the original product accurately but in a highly stylized, commercial setting inspired by the references.
   
   Return the analysis in JSON format. All descriptions (except imagePrompt) MUST be in Bengali (বাংলা).`;
 
-  const imageParts = base64Images.map(img => ({
-    inlineData: {
-      mimeType: "image/jpeg",
-      data: img.split(',')[1]
-    }
+  const productParts = productImages.map(img => ({
+    inlineData: { mimeType: "image/jpeg", data: img.split(',')[1] }
+  }));
+  
+  const refParts = referenceImages.map(img => ({
+    inlineData: { mimeType: "image/jpeg", data: img.split(',')[1] }
   }));
 
   const response = await ai.models.generateContent({
     model,
     contents: {
       parts: [
-        ...imageParts,
+        { text: "CORE PRODUCT IMAGES:" },
+        ...productParts,
+        ...(referenceImages.length > 0 ? [{ text: "STYLE REFERENCE IMAGES (Mimic this vibe):" }, ...refParts] : []),
         {
-          text: "Analyze these product reference images and provide a professional design strategy and a high-end commercial image prompt."
+          text: `Analyze these images. ${userInstructions ? `User instructions: "${userInstructions}".` : ""} Provide a professional design strategy and a high-end commercial image prompt in Bengali (except the prompt string).`
         }
       ]
     },
@@ -73,29 +85,37 @@ export const analyzeProductImage = async (base64Images: string[]): Promise<Desig
   return JSON.parse(response.text);
 };
 
-export const generateProductVision = async (prompt: string, base64Images: string[]): Promise<string> => {
+export const generateProductVision = async (
+  prompt: string, 
+  productImages: string[], 
+  referenceImages: string[],
+  aspectRatio: string = "1:1"
+): Promise<string> => {
   const model = 'gemini-2.5-flash-image';
   
-  const imageParts = base64Images.map(img => ({
-    inlineData: {
-      mimeType: "image/jpeg",
-      data: img.split(',')[1]
-    }
+  const productParts = productImages.map(img => ({
+    inlineData: { mimeType: "image/jpeg", data: img.split(',')[1] }
+  }));
+
+  const refParts = referenceImages.map(img => ({
+    inlineData: { mimeType: "image/jpeg", data: img.split(',')[1] }
   }));
 
   const response = await ai.models.generateContent({
     model,
     contents: {
       parts: [
-        ...imageParts,
+        { text: "THE PRODUCT TO FEATURE (maintain identity exactly):" },
+        ...productParts,
+        ...(referenceImages.length > 0 ? [{ text: "STYLE/VIBE REFERENCE (use this atmosphere):" }, ...refParts] : []),
         {
-          text: `Using these reference images as the product source, generate a professional commercial advertisement shot based on this prompt: ${prompt}. Maintain the product's core identity perfectly but enhance the lighting and environment significantly.`
+          text: `Generate a professional commercial advertisement shot based on this prompt: ${prompt}. Use the product images as the primary object and reference images for environmental/style cues.`
         }
       ]
     },
     config: {
       imageConfig: {
-        aspectRatio: "1:1"
+        aspectRatio: aspectRatio as any
       }
     }
   });

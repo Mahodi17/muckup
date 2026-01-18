@@ -18,7 +18,10 @@ export interface DesignAnalysis {
 }
 
 export interface AppState {
-  images: string[];
+  productImages: string[];
+  referenceImages: string[];
+  aspectRatio: string;
+  customInstructions: string;
   isAnalyzing: boolean;
   isGeneratingImage: boolean;
   analysis: DesignAnalysis | null;
