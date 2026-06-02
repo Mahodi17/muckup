@@ -6,25 +6,32 @@ export interface DesignAnalysis {
   psychologicalProfile: {
     mood: string;
     colorPalette: string[];
+    lightingAtmosphere: string;
     emotionalImpact: string;
   };
   designStrategy: {
-    lighting: string;
-    background: string;
-    composition: string;
-    style: 'Minimalist' | 'Luxury' | 'Vibrant' | 'Corporate' | 'Organic';
+    backgroundConcept: string;
+    compositionRule: string;
+    materialTextureFocus: string;
+    style: 'Streetwear' | 'Editorial' | 'Magazine' | 'Urban';
   };
   imagePrompt: string;
 }
+
+export type PosterTheme = 'Streetwear' | 'Editorial' | 'Magazine' | 'Urban';
 
 export interface AppState {
   productImages: string[];
   referenceImages: string[];
   aspectRatio: string;
   customInstructions: string;
+  posterInstructions: string;
+  posterTheme: PosterTheme;
   isAnalyzing: boolean;
   isGeneratingImage: boolean;
+  isGeneratingPoster: boolean;
   analysis: DesignAnalysis | null;
   generatedImage: string | null;
+  generatedPoster: string | null;
   error: string | null;
 }
